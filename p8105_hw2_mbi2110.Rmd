@@ -2,7 +2,7 @@
 title: "Homework 2"
 author: "Mia Isaacs"
 date: "2024-09-29"
-output: html_document
+output: github_document
 ---
 
 # load necessary packages
@@ -118,7 +118,10 @@ mr_trash_df =
   select(-homes_powered) |> 
   mutate(
     sports_balls = as.integer(
-    round(sports_balls))) 
+    round(sports_balls)),
+    trash_type = "Mr. Trash Wheel",
+    year = as.integer(year)
+    ) 
 ```
 
 
@@ -133,7 +136,9 @@ prof_trash_df =
   rename(
     weight = weight_tons, 
     volume = volume_cubic_yards) |> 
-  select(-homes_powered)
+  select(-homes_powered) |> 
+  mutate(trash_type = "Prof. Trash Wheel",
+         year = as.integer(year))
 ```
 
 ```{r}
@@ -145,14 +150,37 @@ gwynnda_df =
     rename(
     weight = weight_tons, 
     volume = volume_cubic_yards) |> 
-  select(-homes_powered)
+  select(-homes_powered) |> 
+  mutate(trash_type = "Gwynnda Trash Wheel",
+         year = as.integer(year))
 ```
 
 ```{r}
-
+all_trash_df =
+  bind_rows(mr_trash_df, prof_trash_df, gwynnda_df)
 ```
 
 Write a paragraph about these data; you are encouraged to use inline R. Be sure to note the number of observations in the resulting dataset, and give examples of key variables. For available data, what was the total weight of trash collected by Professor Trash Wheel? What was the total number of cigarette butts collected by Gwynnda in June of 2022?
+
+The all_trash_df consists of data from three separate Trash Wheels: Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda Trash Wheel. There are `r nrow(all_trash_df)` total observations and the variables include `r names(all_trash_df)`.
+
+```{r}
+all_trash_df |> 
+  filter(trash_type == "Prof. Trash Wheel") |> 
+  summarise(sum(weight))
+```
+
+The total weight of trash collected by Professor Trash Wheel is 247 tons.
+
+```{r}
+all_trash_df |> 
+  filter(trash_type == "Gwynnda Trash Wheel", 
+         month == "June",
+         year == 2022) |> 
+  summarise(sum(cigarette_butts))
+```
+
+In June of 2022, Gwynnda collected a total of 18,120 cigarette butts.
 
 
 # problem 3 - great british bake off
