@@ -207,12 +207,22 @@ results_df =
 ```
 
 ```{r}
-
+anti_join(bakers_df, bakes_df, by = "baker")
+anti_join(bakers_df, results_df, by = "baker")
+anti_join(bakes_df, results_df, by = c("series", "episode"))
 ```
 
+```{r}
+bakeoff_df = 
+  left_join(bakers_df, results_df, by = c("baker","series")) |> 
+  left_join(bakes_df, by = c("baker", "series", "episode")) |> 
+  relocate(series, episode, baker_name, result, signature_bake, show_stopper,        technical, baker_age, baker_occupation, hometown, baker) |> 
+  arrange(series, episode)
+```
 
-
-
+```{r}
+write_csv(bakeoff_df, "data/cleaned_bakeoff_data.csv")
+```
 
 
 
