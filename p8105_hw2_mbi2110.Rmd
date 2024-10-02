@@ -148,8 +148,40 @@ gwynnda_df =
   select(-homes_powered)
 ```
 
+```{r}
+
+```
 
 Write a paragraph about these data; you are encouraged to use inline R. Be sure to note the number of observations in the resulting dataset, and give examples of key variables. For available data, what was the total weight of trash collected by Professor Trash Wheel? What was the total number of cigarette butts collected by Gwynnda in June of 2022?
+
+
+# problem 3 - great british bake off
+
+In the first part of this problem, your goal is to create a single, well-organized dataset with all the information contained in these data files. To that end: import, clean, tidy, and otherwise wrangle each of these datasets; check for completeness and correctness across datasets (e.g. by viewing individual datasets and using anti_join); merge to create a single, final dataset; and organize this so that variables and observations are in meaningful orders. Export the result as a CSV in the directory containing the original datasets.
+
+```{r}
+bakers_df =
+  read_csv("data/bakers.csv") |> 
+  janitor::clean_names() |> 
+  mutate(baker = word(baker_name, 1))
+```
+
+```{r}
+bakes_df =
+  read_csv("data/bakes.csv", na = c("NA", "N/A", "UNKNOWN", "")) |> 
+  janitor::clean_names()
+```
+
+```{r}
+results_df =
+  read_csv("data/results.csv", skip = 2,
+           na = c("NA", "N/A", "UNKNOWN", ""))
+```
+
+```{r}
+
+```
+
 
 
 
