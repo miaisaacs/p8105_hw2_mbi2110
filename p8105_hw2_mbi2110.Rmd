@@ -9,7 +9,6 @@ output: html_document
 
 ```{r}
 library(tidyverse)
-library(dplyr)
 library(readxl)
 ```
 
@@ -19,10 +18,93 @@ Read and clean the data; retain line, station, name, station latitude / longitud
 
 ```{r}
 nyc_df = 
-  read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") |> 
+  read_csv(
+    "data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv",
+    col_types = cols(Route8 = "c", Route9 = "c", Route10 = "c", Route11 = "c")) |> 
   janitor::clean_names() |> 
-  select(line:entry, vending, ada) |> 
-  mutate(entry = ifelse(entry == "YES", 1, 0))
+  select(line, station_name, station_latitude, station_longitude, 
+    starts_with("route"), entry, exit_only, vending, entrance_type, 
+    ada) |> 
+  mutate(entry = ifelse(entry == "YES", TRUE, FALSE))
 
 view(nyc_df)
 ```
+
+
+Write a short paragraph about this dataset – explain briefly what variables the dataset contains, describe your data cleaning steps so far, and give the dimension (rows x columns) of the resulting dataset. Are these data tidy?
+
+```{r}
+nrow(nyc_df)
+ncol(nyc_df)
+colnames(nyc_df)
+```
+ 
+This dataset contains 19 columns and 1868 rows, consisting of the variables line, name, latitude, longitude, routes 1-11, entrance type, entry, vending, and ada compliance. To clean my data, I used the clean_names step to make the variable naming convention consistent and I selected for the variables of interest. I used a mutate step to change the entry variable from yes/no to a logical variable and specified that routes 8-11 should also be character. These data are not tidy because route and route number should be variables, which means we would have to convert them from wide to long format.
+
+
+How many distinct stations are there? Note that stations are identified both by name and by line (e.g. 125th St 8th Avenue; 125st Broadway; 125st Lenox); the distinct function may be useful here.
+
+```{r}
+nyc_df |> 
+  select(station_name, line) |> 
+  distinct()
+```
+
+There are 465 distinct stations.
+
+
+How many stations are ADA compliant?
+
+```{r}
+nyc_df |> 
+  filter(ada == TRUE) |> 
+  select(station_name, line) |> 
+  distinct()
+```
+
+Only 84 stations are ADA compliant.
+
+
+What proportion of station entrances / exits without vending allow entrance?
+
+```{r}
+nyc_df |> 
+  filter(vending == "NO") |> 
+  pull(entry) |> 
+  mean()
+```
+
+The proportion of station entrances/exits without vending allow entrance is 0.3770492.
+
+
+Reformat data so that route number and route name are distinct variables. How many distinct stations serve the A train? Of the stations that serve the A train, how many are ADA compliant?
+
+```{r}
+nyc_df |> 
+  pivot_longer(
+    route1:route11,
+    names_to = "route_num",
+    values_to = "route") |> 
+  filter(route == "A") |> 
+  select(station_name, line) |> 
+  distinct()
+
+nyc_df |> 
+  pivot_longer(
+    route1:route11,
+    names_to = "route_num",
+    values_to = "route") |> 
+  filter(route == "A", ada == TRUE) |> 
+  select(station_name, line) |> 
+  distinct()
+```
+
+60 distinct stations serve the A train. Of that stations that serve the A train, only 17 are ADA compliant.
+
+
+
+
+
+
+
+
