@@ -191,19 +191,28 @@ In the first part of this problem, your goal is to create a single, well-organiz
 bakers_df =
   read_csv("data/bakers.csv") |> 
   janitor::clean_names() |> 
-  mutate(baker = word(baker_name, 1))
+  separate(
+    baker_name, into = c("baker", "baker_last_name"), sep = " "
+  )
 ```
 
 ```{r}
 bakes_df =
   read_csv("data/bakes.csv", na = c("NA", "N/A", "UNKNOWN", "")) |> 
-  janitor::clean_names()
+  janitor::clean_names() |> 
+  mutate(
+    baker = str_replace_all(baker, '"Jo"', "Jo")
+  )
 ```
 
 ```{r}
 results_df =
   read_csv("data/results.csv", skip = 2,
-           na = c("NA", "N/A", "UNKNOWN", ""))
+           na = c("NA", "N/A", "UNKNOWN", "")) |> 
+  janitor::clean_names() |> 
+  mutate(
+    baker = str_replace_all(baker, '"Jo"', "Jo")
+  )
 ```
 
 ```{r}
@@ -216,13 +225,77 @@ anti_join(bakes_df, results_df, by = c("series", "episode"))
 bakeoff_df = 
   left_join(bakers_df, results_df, by = c("baker","series")) |> 
   left_join(bakes_df, by = c("baker", "series", "episode")) |> 
-  relocate(series, episode, baker_name, result, signature_bake, show_stopper,        technical, baker_age, baker_occupation, hometown, baker) |> 
+  relocate(series, episode, baker, result, signature_bake, show_stopper,        technical, baker_age, baker_occupation, hometown) |> 
   arrange(series, episode)
 ```
 
 ```{r}
 write_csv(bakeoff_df, "data/cleaned_bakeoff_data.csv")
 ```
+
+Describe your data cleaning process, including any questions you have or choices you made. Briefly discuss the final dataset.
+
+To clean each of the three datasets, I used the janitor::clean_names step to establish consistency across all variable names. There were some missing observations in bakes_df and results_df, so I clarified what values should be considered 'na'. For bakers_df, I used a separate step to separate the baker names into first and last for easier merging. The baker Jo Wheatley's name had been put in as "Jo", so I used a mutate step to change it to just Jo. Lastly, I used anti-join to see where inconsistencies and incompleteness across the datasets was present. There was data for 22 bakers in bakers_df that was not present in bakes_df.
+
+The bakeoff_df contains `r nrow(bakeoff_df)` observations and `r ncol(bakeoff_df)` variables including `r names(bakeoff_df)`.
+
+
+Create a reader-friendly table showing the star baker or winner of each episode in Seasons 5 through 10. Comment on this table – were there any predictable overall winners? Any surprises?
+
+
+```{r}
+winner_df =
+  results_df |> 
+  filter(series >=5, series <=10) |> 
+  filter(result == c("WINNER", "STAR BAKER")) |> 
+  select(series, episode, baker, result)
+
+winner_df |>
+  pivot_wider(
+    names_from = series,
+    values_from = baker
+  ) |> 
+  arrange(episode) |> 
+  knitr::kable()
+```
+
+
+Most of the winners were unsurprising, as each of them had previously been a star baker. David, on the other hand, was the winner of series 10 and had not previously been crowned star baker at any point.
+
+
+Import, clean, tidy, and organize the viewership data in viewers.csv. Show the first 10 rows of this dataset. What was the average viewership in Season 1? In Season 5?
+
+```{r}
+viewers_df = 
+  read_csv("data/viewers.csv") |> 
+  janitor::clean_names() |> 
+  pivot_longer(
+    cols = series_1:series_10,
+    names_to = "series",
+    values_to = "viewership",
+    names_prefix = "series_"
+  ) |> 
+  mutate(
+    series = as.numeric(series)
+  ) |> 
+  arrange(series) |> 
+  relocate(series)
+
+knitr::kable(head(viewers_df, 10))
+```
+
+```{r}
+viewers_df |> 
+  filter(series == 1) |> 
+  summarise(mean(viewership, na.rm = TRUE))
+
+viewers_df |> 
+  filter(series == 5) |> 
+  summarise(mean(viewership, na.rm = TRUE))
+```
+
+The average viewership in Season 1 was 2.77 and in Season 5 it was 10.0.
+
 
 
 
